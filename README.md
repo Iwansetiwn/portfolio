@@ -20,6 +20,10 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Agent Office
+
+`agent-office/` holds a separate local dashboard for managing a Claude Code agent team. It isn't part of the site. See [agent-office/README.md](agent-office/README.md).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

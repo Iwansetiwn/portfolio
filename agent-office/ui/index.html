@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="office-token" content="__OFFICE_TOKEN__" />
+    <title>Agent Office</title>
+    <link rel="stylesheet" href="/office.css" />
+    <script src="/office.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Agent Office</span>
+      </div>
+      <label class="session-picker">
+        <span class="visually-hidden">Session</span>
+        <select id="session-select" aria-label="Claude Code session"></select>
+      </label>
+      <div class="pills">
+        <span id="lead-pill" class="pill"></span>
+        <span id="conn-pill" class="pill"></span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="office" aria-label="Office floor">
+        <div id="empty" class="empty" hidden>
+          <h1>The office is empty</h1>
+          <p>No Claude Code session has checked in yet.</p>
+          <ol>
+            <li>Install the hooks once: <code>npm run office:install</code></li>
+            <li>Restart Claude Code in your project: <code>claude</code></li>
+            <li>Your session appears here. Hire teammates from the <b>Hire</b> tab.</li>
+          </ol>
+        </div>
+
+        <div id="floor" class="floor" hidden>
+          <div class="wall">
+            <span class="wall-sign" id="project-name"></span>
+            <span class="wall-clock" id="clock"></span>
+          </div>
+          <div class="rooms">
+            <div class="lead-room" id="lead-room" aria-label="Team lead"></div>
+            <div class="desks" id="desks" aria-label="Teammates"></div>
+          </div>
+          <div class="contractors-wrap" id="contractors-wrap" hidden>
+            <h2 class="area-title">Helpers on call</h2>
+            <div class="contractors" id="contractors"></div>
+          </div>
+        </div>
+
+        <form id="lead-form" class="composer" autocomplete="off">
+          <label for="lead-text" class="composer-label">Tell the lead</label>
+          <div class="composer-row">
+            <textarea id="lead-text" name="text" rows="2" maxlength="6000"
+              placeholder="e.g. Split the checkout refactor into tasks and give one to each teammate"></textarea>
+            <button type="submit" class="btn primary">Send</button>
+          </div>
+        </form>
+        <div id="queue" class="queue" aria-live="polite"></div>
+      </section>
+
+      <aside class="panel">
+        <nav class="tabs" role="tablist">
+          <button role="tab" data-tab="tasks" aria-selected="true">Tasks</button>
+          <button role="tab" data-tab="hire" aria-selected="false">Hire</button>
+          <button role="tab" data-tab="roles" aria-selected="false">Roles</button>
+          <button role="tab" data-tab="activity" aria-selected="false">Activity</button>
+        </nav>
+
+        <div class="tab-body" id="tab-tasks" role="tabpanel">
+          <div class="board" id="board"></div>
+          <form id="task-form" class="card form" autocomplete="off">
+            <h2>New task</h2>
+            <label>Subject<input name="subject" required maxlength="200" placeholder="Add input validation to the contact form" /></label>
+            <label>Details<textarea name="description" rows="3" maxlength="6000" placeholder="Files, acceptance criteria, links…"></textarea></label>
+            <label>Assign to<select name="assignee" data-teammates="anyone"></select></label>
+            <button type="submit" class="btn primary">Add task</button>
+          </form>
+        </div>
+
+        <div class="tab-body" id="tab-hire" role="tabpanel" hidden>
+          <form id="hire-form" class="card form" autocomplete="off">
+            <h2>Hire a teammate</h2>
+            <p class="hint">The lead spawns a new teammate. Each one is a full Claude session with its own context.</p>
+            <label>Name<input name="name" required maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9_\-]*" placeholder="frontend" /></label>
+            <label>Role<select name="role" id="role-select"></select></label>
+            <label>Model
+              <select name="model">
+                <option value="">Same as lead</option>
+                <option value="opus">Opus</option>
+                <option value="sonnet">Sonnet</option>
+                <option value="haiku">Haiku</option>
+              </select>
+            </label>
+            <label>Brief<textarea name="brief" rows="5" maxlength="6000"
+              placeholder="You own the UI in app/ and components/. Pick up frontend tasks from the task list…"></textarea></label>
+            <button type="submit" class="btn primary">Hire</button>
+          </form>
+        </div>
+
+        <div class="tab-body" id="tab-roles" role="tabpanel" hidden>
+          <div id="roles" class="roles"></div>
+          <form id="role-form" class="card form" autocomplete="off">
+            <h2>New role</h2>
+            <p class="hint">Saved as a subagent file in <code>.claude/agents/</code> of this session's project, so you can reuse it for any teammate.</p>
+            <label>Name<input name="name" required maxlength="41" pattern="[a-z0-9][a-z0-9\-]*" placeholder="security-reviewer" /></label>
+            <label>One-line description<input name="description" required maxlength="300" placeholder="Reviews changes for security issues" /></label>
+            <label>Model
+              <select name="model">
+                <option value="inherit">Same as lead</option>
+                <option value="opus">Opus</option>
+                <option value="sonnet">Sonnet</option>
+                <option value="haiku">Haiku</option>
+              </select>
+            </label>
+            <label>Allowed tools <span class="optional">(optional)</span><input name="tools" maxlength="300" placeholder="Read, Grep, Glob, Bash" /></label>
+            <label>Instructions<textarea name="instructions" required rows="6" maxlength="8000"
+              placeholder="You are a security reviewer. For each change, check auth, input validation…"></textarea></label>
+            <button type="submit" class="btn primary">Save role</button>
+          </form>
+        </div>
+
+        <div class="tab-body" id="tab-activity" role="tabpanel" hidden>
+          <ol id="feed" class="feed"></ol>
+        </div>
+      </aside>
+    </main>
+
+    <dialog id="agent-dialog" class="dialog">
+      <form method="dialog" class="dialog-close"><button class="btn ghost" aria-label="Close">✕</button></form>
+      <div id="agent-detail"></div>
+      <form id="dm-form" class="form" autocomplete="off">
+        <label><span id="dm-label">Message</span><textarea name="text" rows="3" maxlength="6000" required></textarea></label>
+        <button type="submit" class="btn primary">Send</button>
+      </form>
+      <form id="assign-form" class="form" autocomplete="off">
+        <label>Give a task<input name="subject" maxlength="200" required placeholder="Task subject" /></label>
+        <button type="submit" class="btn">Assign</button>
+      </form>
+      <button id="shutdown-btn" class="btn danger" type="button">Ask to shut down</button>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

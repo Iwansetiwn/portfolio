@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "office": "node agent-office/server.mjs",
+    "office:install": "node agent-office/install.mjs",
+    "office:uninstall": "node agent-office/install.mjs --uninstall"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",
